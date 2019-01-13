@@ -2,6 +2,8 @@
 sudoku is solvable"""
 
 import numpy as np
+import pulp
+
 
 class Sudoku():
     def __init__(self, n = 20):
@@ -149,6 +151,8 @@ class Sudoku():
         """
         if method == "backtrack":
             flag = self.backtrack_solution()
+        if method == "IP":
+            flag = self.IP_solution()
         return flag
 
     def backtrack_solution(self):
@@ -165,6 +169,80 @@ class Sudoku():
         # Retrieving the set values
         mask = self.grid > 0
 
+    def IP_solution(self):
+        """
+        This method implements the IP solution.
+        Args:
+            - self: Sudoku instance, to be solved using IP.
+        Returns:
+            - flag: boolean, whether the Sudoku is solvable.
+            If True, the completed Sudoku is available through the attribute
+            "_solution"
+        """
+
+        # List of available digits
+        Digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+        Values = Digits
+        Rows = Digits
+        Columns = Digits
+
+        # Creating the block list
+        Blocks = []
+        for i in range(3):
+            for j in range(3):
+                Blocks += [[(Rows[3*i+k], Columns[3*j+l]) for k in range(3) for l in range(3) ]]
+
+        # We need to create the IP problem
+        prob = pulp.LpProblem("Sudoku solver", pulp.LpMinimize)
+
+        # Then we create the problem variables
+        choices = pulp.LpVariable.dicts("Choice", (Rows, Columns, Values), 0, 1, pulp.LpInteger)
+
+        # We define the objective function which is 0 here
+        prob += 0, "Objective Function"
+
+        # Defining the constraint: only one value can be put in a cell
+        for r in Rows:
+            for c in Columns:
+                prob += pulp.lpSum([choices[r][c][v] for v in Values]) == 1, ""
+
+        for v in Values:
+            # Each value must occur exactly once in each row
+            for r in Rows:
+                prob += pulp.lpSum([choices[r][c][v] for c in Columns]) == 1, ""
+
+            # Each value must occur exactly once in each column
+            for c in Columns:
+                prob += pulp.lpSum([choices[r][c][v] for r in Rows]) == 1, ""
+
+            # Each value must occur exactly once in each block
+            for b in Blocks:
+                prob += pulp.lpSum([choices[r][c][v] for (r,c) in b]) == 1, ""
+
+        # We need to add the starting numbers as constraints
+        grid = self.grid
+        for r in range(len(grid)):
+            for c in range(len(grid[0])):
+                value = grid[r][c]
+                if value != 0:
+                    prob += choices[str(int(r + 1))][str(int(c + 1))][str(int(value))] == 1, ""
+
+        solve_value = prob.solve()
+
+        # flag is True is solve_value evaluates to 1 i.e. the Sudoku can be
+        # solved
+        flag = solve_value == 1
+
+        if flag:
+            solution_grid = np.zeros((9,9))
+            for r in Rows:
+                for c in Columns:
+                    for v in Values:
+                        if choices[r][c][v].value() == 1.0:
+                            solution_grid[int(r) -1][int(c) -1] = v
+            self._solution = solution_grid
+        return flag
 
     def put_number(self, row, col, number):
         """
