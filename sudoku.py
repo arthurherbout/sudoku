@@ -4,6 +4,7 @@ sudoku is solvable"""
 import numpy as np
 import pulp
 
+from time import time
 
 class Sudoku():
     def __init__(self, n = 20):
@@ -163,11 +164,12 @@ class Sudoku():
         Returns:
             - flag: boolean, whether the Sudoku is solvable.
             If True, the completed Sudoku is available through the attribute
-            "solution".
+            "solution" and the completion time through "_duration".
         """
-
+        duration= time()
         # Retrieving the set values
         mask = self.grid > 0
+        duration = time() - duration
 
     def IP_solution(self):
         """
@@ -177,8 +179,10 @@ class Sudoku():
         Returns:
             - flag: boolean, whether the Sudoku is solvable.
             If True, the completed Sudoku is available through the attribute
-            "_solution"
+            "_solution" and the completion time through "_duration".
         """
+
+        duration = time()
 
         # List of available digits
         Digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -241,7 +245,9 @@ class Sudoku():
                     for v in Values:
                         if choices[r][c][v].value() == 1.0:
                             solution_grid[int(r) -1][int(c) -1] = v
+            duration = time() - duration
             self._solution = solution_grid
+            self._time = duration
         return flag
 
     def put_number(self, row, col, number):
