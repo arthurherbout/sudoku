@@ -154,6 +154,8 @@ class Sudoku():
             flag = self.backtrack_solution()
         if method == "IP":
             flag = self.IP_solution()
+        if method == "RL":
+            flag = self.RL_solution()
         return flag
 
     def backtrack_solution(self):
@@ -249,6 +251,17 @@ class Sudoku():
             self._solution = solution_grid
             self._time = duration
         return flag
+
+    def RL_solution(self):
+        """
+        This method implements the RL solution.
+        Args:
+            - self: Sudoku instance, to be solved using IP.
+        Returns:
+            - flag: boolean, whether the Sudoku is solvable.
+            If True, the completed Sudoku is available through the attribute
+            "_solution" and the completion time through "_duration".
+        """
 
     def put_number(self, row, col, number):
         """
