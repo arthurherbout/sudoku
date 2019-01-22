@@ -139,6 +139,58 @@ class Sudoku():
                 break
         return flag
 
+    def first_unassigned(self):
+        """
+        This method returns the first unassigned cell.
+        Args:
+            - self: Sudoku instance
+        Returns:
+            - a: array[row, col, bool]
+        """
+        for i in range(9):
+            for j in range(9):
+                if self.grid[i][j] == 0:
+                    row = i
+                    col = j
+                    a = [row, col, True]
+                    return a
+        return [False]
+
+    def is_ok(self, row, col, i):
+        """
+        This method checks if number i can be placed safely at row row
+        and column col.
+        Args:
+            - self: Sudoku instance, must have been initialized.
+            - row: int, from 0 to 8 included. Row in which the number i is to be
+            added.
+            - col: int, fromo 0 to 8 included. Column in which the number i is
+            to be added.
+        Returns:
+            - flag: bool, whether it is safe to place i at position row, col.
+        """
+        flag = True
+
+        # is_ok_row
+        for j in range(0,9):
+            if self.grid[row][j] == i:
+                flag = False
+
+        # is_ok_column
+        for j in range(0,9):
+            if self.grid[j][col] == i:
+                flag = False
+
+        # is_ok_block
+        row_start = (row//3)*3
+        col_start = (col//3)*3
+
+        for k in range(row_start, row_start + 3):
+            for j in range(col_start, col_start + 3):
+                if self.grid[k][j] == i:
+                    flag = False
+        return flag
+
     def complete_sudoku(self, method = "backtrack"):
         """
         This method completes the Sudoku given a specific method.
@@ -150,15 +202,18 @@ class Sudoku():
             If True, the completed Sudoku is available through the attribute
             "solution".
         """
+        duration = time()
         if method == "backtrack":
-            flag = self.backtrack_solution()
+            flag = self.backtrack_solution(self.grid)
         if method == "IP":
             flag = self.IP_solution()
         if method == "RL":
             flag = self.RL_solution()
+        duration = time() - duration
+        self._time = duration
         return flag
 
-    def backtrack_solution(self):
+    def backtrack_solution(self, grid):
         """
         This method implements the backtrack method.
         Args:
@@ -168,10 +223,33 @@ class Sudoku():
             If True, the completed Sudoku is available through the attribute
             "solution" and the completion time through "_duration".
         """
-        duration= time()
-        # Retrieving the set values
-        mask = self.grid > 0
-        duration = time() - duration
+
+        a = self.first_unassigned()
+
+        flag = False
+
+        if a[-1] == False:
+            flag = True
+            return flag # it's over, the sudoku is either completed or insolvable
+        else:
+            # there is at least one unassigned cell
+            row = a[0]
+            col = a[1]
+
+            # we will try to put any ok number in that cell
+            for i in range(1,10): # 1 -> 9
+                if self.is_ok(row,col,i):
+                    grid[row][col] = i
+
+                    # backtracking
+                    if self.backtrack_solution(grid):
+                        self._solution = grid
+                        flag = True
+                        break
+                    else:
+                        grid[row][col] = 0
+
+            return flag
 
     def IP_solution(self):
         """
@@ -183,8 +261,6 @@ class Sudoku():
             If True, the completed Sudoku is available through the attribute
             "_solution" and the completion time through "_duration".
         """
-
-        duration = time()
 
         # List of available digits
         Digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -247,9 +323,7 @@ class Sudoku():
                     for v in Values:
                         if choices[r][c][v].value() == 1.0:
                             solution_grid[int(r) -1][int(c) -1] = v
-            duration = time() - duration
             self._solution = solution_grid
-            self._time = duration
         return flag
 
     def RL_solution(self):
