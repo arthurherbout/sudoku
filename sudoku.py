@@ -230,7 +230,7 @@ class Sudoku():
 
         if a[-1] == False:
             flag = True
-            return flag # it's over, the sudoku is either completed or insolvable
+            #return flag # it's over, the sudoku is either completed or insolvable
         else:
             # there is at least one unassigned cell
             row = a[0]
@@ -249,7 +249,7 @@ class Sudoku():
                     else:
                         grid[row][col] = 0
 
-            return flag
+        return flag
 
     def IP_solution(self):
         """
